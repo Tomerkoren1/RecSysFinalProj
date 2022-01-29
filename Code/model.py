@@ -14,19 +14,14 @@ from tqdm import tqdm
 from main import use_logs
 import wandb
 
+
 import networks as nets
 
 class Model:
-    def __init__(self, hidden, learning_rate, batch_size):
+    def __init__(self, hidden, learning_rate, batch_size, device):
         self.batch_size = batch_size
         self.net = nets.AutoEncoder(hidden)
 
-        # device
-        device = torch.device('cpu')
-        if torch.cuda.is_available():
-            device = torch.device('cuda')
-        print('neural network device: %s (CUDA available: %s, count: %d)',
-             device, torch.cuda.is_available(), torch.cuda.device_count())
         self.device = device
 
         self.net = self.net.to(device=self.device)
@@ -39,13 +34,13 @@ class Model:
         # self.opt = self.opt.to(device=device)                                                           
         self.feature_size = hidden[0] # n_user/n_item
 
-    def run(self, trainset, testlist, num_epoch, display_step, plot = True):
+    def run(self, trainset, testlist, num_epoch, plot = True):
         RMSE = []
         for epoch in tqdm(range(1, num_epoch + 1)):
             #print "Epoch %d, at %s" % (epoch, datetime.now())
             train_loader = DataLoader(trainset, self.batch_size, shuffle=True, pin_memory=True)
-            self.train(train_loader, epoch, display_step)
-            rmse = self.test(trainset, testlist, epoch, display_step)
+            self.train(train_loader, epoch)
+            rmse = self.test(trainset, testlist, epoch)
             if(use_logs):
                 wandb.log({"rmse": rmse}, step=epoch)
             RMSE.append(rmse)
@@ -62,7 +57,7 @@ class Model:
 
 
     #批训练
-    def train(self, train_loader, epoch, display_step = 10):
+    def train(self, train_loader, epoch):
         self.net.train()
         features = Variable(torch.FloatTensor(self.batch_size, self.feature_size).to(device=self.device))
         masks = Variable(torch.FloatTensor(self.batch_size, self.feature_size).to(device=self.device))
@@ -84,9 +79,6 @@ class Model:
                 wandb.log({"train_loss": loss}, step=epoch)
             loss.backward()
             self.opt.step()
-
-        # if (epoch % display_step == 0):
-        #     print ("Epoch %d, train end." % epoch)
 
     def test(self, trainset, testlist, epoch, display_step = 10):
         self.net.eval()
