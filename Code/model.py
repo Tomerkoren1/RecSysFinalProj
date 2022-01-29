@@ -10,6 +10,9 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 from torch import optim, nn
 import torch.nn.functional as F
+from tqdm import tqdm
+from main import use_logs
+import wandb
 
 import networks as nets
 
@@ -27,6 +30,9 @@ class Model:
         self.device = device
 
         self.net = self.net.to(device=self.device)
+        
+        if(use_logs):
+            wandb.watch(self.net)
 
         #self.opt = optim.Adam(self.net.parameters(), learning_rate)
         self.opt = optim.SGD(self.net.parameters(), learning_rate, momentum=0.9, weight_decay=1e-4)
@@ -35,11 +41,13 @@ class Model:
 
     def run(self, trainset, testlist, num_epoch, display_step, plot = True):
         RMSE = []
-        for epoch in range(1, num_epoch + 1):
+        for epoch in tqdm(range(1, num_epoch + 1)):
             #print "Epoch %d, at %s" % (epoch, datetime.now())
             train_loader = DataLoader(trainset, self.batch_size, shuffle=True, pin_memory=True)
             self.train(train_loader, epoch, display_step)
             rmse = self.test(trainset, testlist, epoch, display_step)
+            if(use_logs):
+                wandb.log({"rmse": rmse}, step=epoch)
             RMSE.append(rmse)
         if plot:
             x_label = np.arange(0,num_epoch,1)
@@ -72,11 +80,13 @@ class Model:
             output = self.net(features)
             loss = F.mse_loss(output* masks, features* masks)
             loss = loss.to(device=self.device)
+            if(use_logs):
+                wandb.log({"loss": loss}, step=epoch)
             loss.backward()
             self.opt.step()
 
-        if (epoch % display_step == 0):
-            print ("Epoch %d, train end." % epoch)
+        # if (epoch % display_step == 0):
+        #     print ("Epoch %d, train end." % epoch)
 
     def test(self, trainset, testlist, epoch, display_step = 10):
         self.net.eval()
@@ -92,6 +102,6 @@ class Model:
             rmse += (xc[i][j]-r)*(xc[i][j]-r)
         rmse = math.sqrt(rmse / len(testlist))
 
-        if (epoch % display_step == 0):
-            print (" Test RMSE = %f" % rmse)
+        # if (epoch % display_step == 0):
+        #     print (" Test RMSE = %f" % rmse)
         return rmse
