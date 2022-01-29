@@ -78,10 +78,10 @@ class Model:
                 masks = Variable(mask)
             self.opt.zero_grad()
             output = self.net(features)
-            loss = F.mse_loss(output* masks, features* masks)
+            loss = torch.sqrt(F.mse_loss(output* masks, features* masks))
             loss = loss.to(device=self.device)
             if(use_logs):
-                wandb.log({"loss": loss}, step=epoch)
+                wandb.log({"train_loss": loss}, step=epoch)
             loss.backward()
             self.opt.step()
 
