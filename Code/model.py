@@ -11,14 +11,13 @@ import matplotlib.pyplot as plt
 from torch import optim, nn
 import torch.nn.functional as F
 from tqdm import tqdm
-from main import use_logs
 import wandb
 
 
 import networks as nets
 
 class Model:
-    def __init__(self, hidden, learning_rate, batch_size, device):
+    def __init__(self, hidden, learning_rate, batch_size, device, use_logs):
         self.batch_size = batch_size
         self.net = nets.AutoEncoder(hidden)
 
@@ -34,12 +33,12 @@ class Model:
         # self.opt = self.opt.to(device=device)                                                           
         self.feature_size = hidden[0] # n_user/n_item
 
-    def run(self, trainset, testlist, num_epoch, plot = True):
+    def run(self, trainset, testlist, num_epoch, use_logs, plot = True):
         RMSE = []
         for epoch in tqdm(range(1, num_epoch + 1)):
             #print "Epoch %d, at %s" % (epoch, datetime.now())
             train_loader = DataLoader(trainset, self.batch_size, shuffle=True, pin_memory=True)
-            self.train(train_loader, epoch)
+            self.train(train_loader, epoch, use_logs)
             rmse = self.test(trainset, testlist, epoch)
             if(use_logs):
                 wandb.log({"rmse": rmse}, step=epoch)
@@ -57,7 +56,7 @@ class Model:
 
 
     #批训练
-    def train(self, train_loader, epoch):
+    def train(self, train_loader, epoch, use_logs):
         self.net.train()
         features = Variable(torch.FloatTensor(self.batch_size, self.feature_size).to(device=self.device))
         masks = Variable(torch.FloatTensor(self.batch_size, self.feature_size).to(device=self.device))

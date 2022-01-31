@@ -17,18 +17,12 @@ from torch.utils.data import DataLoader, Dataset
 display_step = 10
 plotbool = False
 user_based = False
-global use_logs
-use_logs = False
+use_logs = True
 
 def cli():
     """ Handle argument parsing
     """
-    parser = argparse.ArgumentParser(
-        prog='python3 -m',
-        usage='%(prog)s [options]',
-        description=__doc__,
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
+    parser = argparse.ArgumentParser()
     parser.add_argument('--learning_rate', default=0.2,
                         help='learning_rate')
     parser.add_argument('--epoch_num', default=500,
@@ -37,7 +31,9 @@ def cli():
                         help='batch_size')
     parser.add_argument('--hidden_num', default=500,
                         help='hidden layers number')
-    parser.add_argument('--model_name', default='BiasMF',
+    parser.add_argument('--latent_dim', default=20,
+                        help='MF latent dime')
+    parser.add_argument('--model_name', default='AutoRec',
                         help='model name')
 
     args = parser.parse_args()
@@ -53,9 +49,10 @@ def trainAutoRec(args, train_list, val_list, n_user, n_item, user_based, device)
     setmod = model.Model(hidden=[h, args.hidden_num],
                       learning_rate=args.learning_rate,
                       batch_size=args.batch_size,
-                      device = device)
+                      device = device,
+                      use_logs = use_logs)
 
-    RMSE = setmod.run(trainset, val_list, num_epoch = args.epoch_num, plot = plotbool)
+    RMSE = setmod.run(trainset, val_list, num_epoch = args.epoch_num, plot = plotbool, use_logs = use_logs)
 
 
 def trainBiasMF(args, train_list, val_list, n_user, n_item, device):
@@ -65,7 +62,7 @@ def trainBiasMF(args, train_list, val_list, n_user, n_item, device):
     item_tensor = torch.LongTensor([val[1] for val in train_list]).to(device = device)
     rating_tensor = torch.FloatTensor([val[2] for val in train_list]).to(device = device)
     dataset = sd.RateDataset(user_tensor, item_tensor, rating_tensor)
-    train_loader = DataLoader(dataset, batch_size=64, shuffle=True)
+    train_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, pin_memory=True)
 
     # Test
     user_tensor = torch.LongTensor([val[0] for val in val_list]).to(device = device)
@@ -76,14 +73,17 @@ def trainBiasMF(args, train_list, val_list, n_user, n_item, device):
     params = {'num_users': n_user, 
             'num_items': n_item,
             'global_mean': 3, 
-            'latent_dim': 20,
+            'latent_dim': args.latent_dim,
             'device': device
             }
 
     model = BiasMF(params)
     model = model.to(device=device)
 
-    model.fit(train_loader=train_loader, val_dataset=val_dataset, num_epoch = args.epoch_num)
+    if(use_logs):
+            wandb.watch(model)
+
+    model.fit(train_loader=train_loader, val_dataset=val_dataset, num_epoch = args.epoch_num, use_logs = use_logs)
 
 
 if __name__ == '__main__':
@@ -95,6 +95,7 @@ if __name__ == '__main__':
                 "epochs": args.epoch_num,
                 "batch_size": args.batch_size,
                 "hidden_num": args.hidden_num,
+                "latent_dim": args.latent_dim,
                 "model_name": args.model_name,
                 }
         wandb.init(project="RecFinalProject", entity="tomerkoren", config=config)

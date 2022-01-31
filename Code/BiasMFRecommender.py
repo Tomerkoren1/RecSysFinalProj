@@ -7,9 +7,9 @@
 @Email: yudi@shanshu.ai
 @Description: 
 '''
-from turtle import forward
 import torch
 import math
+import wandb
 
 class BiasMF(torch.nn.Module):
     def __init__(self, params):
@@ -41,7 +41,7 @@ class BiasMF(torch.nn.Module):
 
         return rating
 
-    def fit(self, train_loader, val_dataset, num_epoch):
+    def fit(self, train_loader, val_dataset, num_epoch, use_logs):
         for epoch in range(num_epoch//10):
             for bid, batch in enumerate(train_loader):
                 u, i, r = batch[0].to(device=self.device), batch[1].to(device=self.device), batch[2].to(device=self.device)
@@ -50,12 +50,16 @@ class BiasMF(torch.nn.Module):
                 preds = self.forward(u, i)
                 loss = torch.sqrt(self.criterion(preds, r))
                 loss = loss.to(device=self.device)
+                if(use_logs):
+                    wandb.log({"train_loss": loss}, step=epoch)
                 # backward and optimize
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
             
             rmse = self.validate(val_dataset)
+            if(use_logs):
+                wandb.log({"rmse": rmse}, step=epoch)
             print('Epoch [{}/30], Loss: {:.4f}, RMSE: {:.4f}'.format(epoch + 1, loss.item(), rmse))
 
     def validate(self, val_dataset):
@@ -64,8 +68,6 @@ class BiasMF(torch.nn.Module):
         for bid, batch in enumerate(val_dataset):
             u, i, r = batch[0].to(device=self.device), batch[1].to(device=self.device), batch[2].to(device=self.device)
             preds = self.forward(u, i)
-            if(r==0):
-                print('Nir')
             rmse += (preds-r)*(preds-r)
         rmse = math.sqrt(rmse / len(val_dataset))
         return rmse
