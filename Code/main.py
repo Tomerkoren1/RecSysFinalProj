@@ -18,6 +18,7 @@ display_step = 10
 plotbool = False
 user_based = False
 use_logs = True
+run_sweep = True
 
 def cli():
     """ Handle argument parsing
@@ -62,7 +63,7 @@ def trainBiasMF(args, train_list, val_list, n_user, n_item, device):
     item_tensor = torch.LongTensor([val[1] for val in train_list]).to(device = device)
     rating_tensor = torch.FloatTensor([val[2] for val in train_list]).to(device = device)
     dataset = sd.RateDataset(user_tensor, item_tensor, rating_tensor)
-    train_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, pin_memory=True)
+    train_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 
     # Test
     user_tensor = torch.LongTensor([val[0] for val in val_list]).to(device = device)
@@ -90,15 +91,19 @@ if __name__ == '__main__':
     start = datetime.now()
     args = cli()
     if(use_logs):
-        config = {
-                "learning_rate": args.learning_rate,
-                "epochs": args.epoch_num,
-                "batch_size": args.batch_size,
-                "hidden_num": args.hidden_num,
-                "latent_dim": args.latent_dim,
-                "model_name": args.model_name,
-                }
-        wandb.init(project="RecFinalProject", entity="tomerkoren", config=config)
+        if(not run_sweep):
+            config = {
+                    "learning_rate": args.learning_rate,
+                    "epochs": args.epoch_num,
+                    "batch_size": args.batch_size,
+                    "hidden_num": args.hidden_num,
+                    "latent_dim": args.latent_dim,
+                    "model_name": args.model_name,
+                    }
+            wandb.init(project="RecFinalProject", entity="tomerkoren", config=config)
+        else:
+            wandb.init(project="RecFinalProject", entity="tomerkoren")
+            args = wandb.config
 
     device = torch.device('cpu')
     if torch.cuda.is_available():

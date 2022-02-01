@@ -37,7 +37,7 @@ class Model:
         RMSE = []
         for epoch in tqdm(range(1, num_epoch + 1)):
             #print "Epoch %d, at %s" % (epoch, datetime.now())
-            train_loader = DataLoader(trainset, self.batch_size, shuffle=True, pin_memory=True)
+            train_loader = DataLoader(trainset, self.batch_size, shuffle=True)
             self.train(train_loader, epoch, use_logs)
             rmse = self.test(trainset, testlist, epoch)
             if(use_logs):
