@@ -72,7 +72,7 @@ class Model:
                 masks = Variable(mask)
             self.opt.zero_grad()
             output = self.net(features)
-            loss = torch.sqrt(F.mse_loss(output* masks, features* masks))
+            loss = torch.sqrt(F.mse_loss(output* masks, features* masks, reduction='sum')/masks.sum().item())
             loss = loss.to(device=self.device)
             if(use_logs):
                 wandb.log({"train_loss": loss}, step=epoch)
