@@ -6,10 +6,11 @@ import os
 import sys
 import numpy as np
 
-path_prefix = './Data/ml-1m/'
+path_prefix = './Data/'
 
-def load_data(dataset='ratings', train_ratio=0.9):
-    fname = os.path.abspath(path_prefix+dataset+'.dat')
+
+def load_data(dataset='ml-1m', file='ratings', train_ratio=0.9):
+    fname = os.path.abspath(path_prefix+dataset+'/'+file+'.dat')
     max_uid = 0
     max_vid = 0
     records = []
@@ -22,7 +23,7 @@ def load_data(dataset='ratings', train_ratio=0.9):
 
     with open(fname) as f:
         for line in f:
-            #user,item,rating,m = line.split()
+            #userId,movieId,rating,timestamp = line.split()
             tks = line.strip().split('::')#把数据变成一个list
             #tks = m
             if first_line_flag:

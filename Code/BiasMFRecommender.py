@@ -41,7 +41,7 @@ class BiasMF(torch.nn.Module):
 
         return rating
 
-    def fit(self, train_loader, val_dataset, num_epoch, use_logs):
+    def fit(self, train_loader, val_dataset, num_epoch, use_wandb):
         for epoch in range(num_epoch//10):
             for bid, batch in enumerate(train_loader):
                 u, i, r = batch[0].to(device=self.device), batch[1].to(device=self.device), batch[2].to(device=self.device)
@@ -50,7 +50,7 @@ class BiasMF(torch.nn.Module):
                 preds = self.forward(u, i)
                 loss = torch.sqrt(self.criterion(preds, r))
                 loss = loss.to(device=self.device)
-                if(use_logs):
+                if(use_wandb):
                     wandb.log({"train_loss": loss}, step=epoch)
                 # backward and optimize
                 self.optimizer.zero_grad()
@@ -58,7 +58,7 @@ class BiasMF(torch.nn.Module):
                 self.optimizer.step()
             
             rmse = self.validate(val_dataset)
-            if(use_logs):
+            if(use_wandb):
                 wandb.log({"rmse": rmse}, step=epoch)
             print('Epoch [{}/30], Loss: {:.4f}, RMSE: {:.4f}'.format(epoch + 1, loss.item(), rmse))
 
