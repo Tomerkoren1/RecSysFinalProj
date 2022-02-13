@@ -36,7 +36,7 @@ class AutoEncoder(nn.Module):
             d1['enc_linear' + str(i)] = nn.Linear(hidden[i], hidden[i + 1])#nn.Linear(input,out,bias=True)
             #d1['enc_bn' + str(i)] = nn.BatchNorm1d(hidden[i + 1])
             d1['enc_drop' + str(i)] = nn.Dropout(dropout)
-            d1['enc_relu'+str(i)] = nn.ReLU() 
+            d1['enc_relu'+str(i)] = nn.Sigmoid()
         self.encoder = nn.Sequential(d1)
         d2 = OrderedDict()
         for i in range(len(hidden) - 1, 0, -1):
@@ -47,13 +47,17 @@ class AutoEncoder(nn.Module):
         self.decoder = nn.Sequential(d2)
 
     def forward(self, x):
-        #由于norm1d标准化效果并不好，进行一种“归一化”
+        #norm1d
         x = (x-1)/5.0
         x = self.decoder(self.encoder(x))
         x = torch.clamp(x, 0, 1.0)#torch.clamp(input, min, max)
         x = x * 5.0 + 1
         return x
 
+def init_params(layer):
+    if isinstance(layer, nn.Linear):
+        torch.nn.init.xavier_uniform_(layer.weight)
+        torch.nn.init.uniform_(layer.bias)
 
 class OurAutoEncoder(nn.Module):
     def __init__(self, hidden, act_type, dropout=0.1):
@@ -61,23 +65,24 @@ class OurAutoEncoder(nn.Module):
         d1 = OrderedDict()
         for i in range(len(hidden)-1):
             d1['enc_linear' + str(i)] = nn.Linear(hidden[i], hidden[i + 1])#nn.Linear(input,out,bias=True)
-
-            d1['enc_bn' + str(i)] = nn.BatchNorm1d(hidden[i + 1])
+            init_params(d1['enc_linear' + str(i)])
+            # d1['enc_bn' + str(i)] = nn.BatchNorm1d(hidden[i + 1])
+            d1['enc_drop' + str(i)] = nn.Dropout(dropout)
             d1['enc_relu'+str(i)] = activation(act_type)
-        d1['enc_drop' + str(i)] = nn.Dropout(dropout)
-        
         self.encoder = nn.Sequential(d1)
         d2 = OrderedDict()
         for i in range(len(hidden) - 1, 0, -1):
             d2['dec_linear' + str(i)] = nn.Linear(hidden[i], hidden[i - 1])
-            d2['dec_bn' + str(i)] = nn.BatchNorm1d(hidden[i - 1])
+            init_params(d2['dec_linear' + str(i)])
+            # d2['dec_bn' + str(i)] = nn.BatchNorm1d(hidden[i - 1])
+            d2['dec_drop' + str(i)] = nn.Dropout(dropout)
             d2['dec_relu' + str(i)] = activation(act_type)
-        # d2['dec_drop' + str(i)] = nn.Dropout(dropout)
+            
             
         self.decoder = nn.Sequential(d2)
 
     def forward(self, x):
-        #由于norm1d标准化效果并不好，进行一种“归一化”
+        #norm1d
         x = (x-1)/5.0
         x = self.decoder(self.encoder(x))
         x = torch.clamp(x, 0, 1.0)#torch.clamp(input, min, max)

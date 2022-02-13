@@ -19,31 +19,31 @@ import json
 display_step = 10
 plotbool = False
 user_based = False
-use_wandb = False
+use_wandb = True
 
 def cli():
     """ Handle argument parsing
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--learning_rate', default=0.05,
+    parser.add_argument('--learning_rate', default=0.2,
                         help='learning_rate')
     parser.add_argument('--epoch_num', default=400,
                         help='epoch number')
-    parser.add_argument('--batch_size', default=64,
+    parser.add_argument('--batch_size', default=128,
                         help='batch_size')
-    parser.add_argument('--hidden_num', default='[1024, 512]',
+    parser.add_argument('--hidden_num', default='[512]',
                         help='hidden layers number')
     parser.add_argument('--latent_dim', default=20,
                         help='MF latent dime')
-    parser.add_argument('--model_name', default='OurAutoRec',
+    parser.add_argument('--model_name', default='AutoRec',
                         help='model name')
     parser.add_argument('--act_type', default='sigmoid',
                         help='activation type')
-    parser.add_argument('--dropout', default=0.15,
+    parser.add_argument('--dropout', default=0.1,
                         help='dropout value')
-    parser.add_argument('--momentum', default=0.996,
+    parser.add_argument('--momentum', default=0.9,
                         help='momentum value')
-    parser.add_argument('--weight_decay', default=1e-5,
+    parser.add_argument('--weight_decay', default=1e-4,
                         help='weight decay value')
     parser.add_argument('--dataset', default='ml-1m',
                         help='dataset type')
@@ -80,7 +80,9 @@ def trainAutoRec(args, train_list, val_list, n_user, n_item, user_based, device)
     else:
         h = n_user
 
-    setmod = model.Model(hidden=[h, *args.hidden_num],
+    hidden_num = json.loads(userArgs.hidden_num)
+
+    setmod = model.Model(hidden=[h, *hidden_num],
                       learning_rate=args.learning_rate,
                       batch_size=args.batch_size,
                       dropout= args.dropout,
@@ -109,7 +111,8 @@ def trainBiasMF(args, train_list, val_list, n_user, n_item, device):
             'num_items': n_item,
             'global_mean': 3, 
             'latent_dim': args.latent_dim,
-            'device': device
+            'device': device,
+            'lr' : args.learning_rate
             }
 
     model = BiasMF(params)
