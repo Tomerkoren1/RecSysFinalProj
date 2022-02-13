@@ -26,8 +26,7 @@ def load_data(dataset='ml-1m', file='ratings', train_ratio=0.9):
         for line in f:
             #userId,movieId,rating,timestamp = line.split()
             tks = line.strip().split('::')#把数据变成一个list
-            if math.ceil(float(tks[2])) != float(tks[2]):
-                continue
+            
             #tks = m
             if first_line_flag:
                 max_uid = int(tks[0])
