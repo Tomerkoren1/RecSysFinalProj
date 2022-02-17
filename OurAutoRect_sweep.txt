@@ -1,0 +1,40 @@
+command:
+- ${env}
+- ./.venv_rec/Scripts/python.exe
+- ${program}
+method: bayes
+metric:
+  goal: minimize
+  name: rmse
+parameters:
+  act_type:
+    distribution: categorical
+    values:
+    - relu
+  dataset:
+    values:
+    - ml-1m
+  dropout:
+    distribution: uniform
+    max: 0.8
+    min: 0.2
+  hidden_num:
+    distribution: categorical
+    values:
+    - '[1024, 512]'
+  learning_rate:
+    values:
+    - 0.01
+    - 0.1
+  model_name:
+    distribution: constant
+    value: OurAutoRec
+  momentum:
+    distribution: uniform
+    max: 0.999
+    min: 0.8
+  weight_decay:
+    distribution: uniform
+    max: 0.001
+    min: 1e-06
+program: ./Code/main.py

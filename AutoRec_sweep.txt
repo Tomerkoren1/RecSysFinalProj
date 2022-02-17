@@ -1,0 +1,27 @@
+command:
+- ${env}
+- ./.venv_rec/Scripts/python.exe
+- ${program}
+method: grid
+parameters:
+  dataset:
+    values:
+    - ml-1m
+    - ml-100k
+  hidden_num:
+    values:
+    - '[10]'
+    - '[50]'
+    - '[100]'
+    - '[200]'
+    - '[500]'
+    - '[1000]'
+  learning_rate:
+    values:
+    - 0.01
+    - 0.1
+    - 0.5
+  model_name:
+    distribution: constant
+    value: AutoRec
+program: ./Code/main.py
