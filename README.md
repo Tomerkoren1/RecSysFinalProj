@@ -21,7 +21,7 @@
 11. --weight_decay - weight decay value
 
 ### Hyper Parameters
-We use the wandb sweep feature to run hyper parameters optimization. To reprduce our please do the following:
+We use the wandb sweep feature to run hyper parameters optimization. To reprduce our work please do the following:
 - Create an account for wandb and login on your computer. For more details, see https://wandb.ai/site
 - Create a new project
 - Create a new sweep, copy one of our sweep configuration (one per model type) and paste it in your sweep configuration. 
