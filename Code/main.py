@@ -122,7 +122,7 @@ if __name__ == '__main__':
     start = datetime.now()
     userArgs = cli()
     if(use_wandb):
-            wandb.init(project="RecFinalProject", entity="tomerkoren", config=vars(userArgs))
+            wandb.init(project="EnterYourWandbProjectName", entity="EnterYourWandbUserName", config=vars(userArgs))
             userArgs = wandb.config
             
     print(vars(userArgs))
