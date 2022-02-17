@@ -1,6 +1,3 @@
-# model.py
-# Modified by ImKe on 2019/9/4.
-# Copyright © 2019 ImKe. All rights reserved.
 
 import torch
 import math
@@ -8,10 +5,11 @@ import numpy as np
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
-from torch import optim, nn
+from torch import optim
 import torch.nn.functional as F
 from tqdm import tqdm
 import wandb
+import metrics
 
 
 import networks as nets
@@ -83,7 +81,7 @@ class Model:
             loss.backward()
             self.opt.step()
 
-    def test(self, trainset, testlist, epoch, display_step=10):
+    def test(self, trainset, testlist, epoch):
         self.net.eval()
         x_mat, mask, user_based = trainset.get_mat()
         features = Variable(x_mat.to(device=self.device))
@@ -112,8 +110,8 @@ class Model:
                 zero_cnt += 1
                 continue
 
-            MRR_of_user = MRR_for_user(user_true, user_pred)
-            NDCG_of_user = NDCG_for_user(user_true,user_pred)
+            MRR_of_user = metrics.MRR_for_user(user_true, user_pred)
+            NDCG_of_user = metrics.NDCG_for_user(user_true,user_pred)
             total_MRR += MRR_of_user
             total_nDCG += NDCG_of_user
         total_MRR /= (users_num - zero_cnt)
@@ -135,7 +133,7 @@ class OurModel:
             wandb.watch(self.net)
 
         # self.opt = optim.Adagrad(self.net.parameters(), weight_decay=1e-5)
-        # self.opt = optim.Adam(self.net.parameters(),lr=1e-5,weight_decay=1e-7)
+        # self.opt = optim.Adam(self.net.parameters())
         self.opt = optim.SGD(self.net.parameters(), 
                             lr=learning_rate, 
                             momentum=momentum, 
@@ -192,7 +190,7 @@ class OurModel:
             loss.backward()
             self.opt.step()
 
-    def test(self, trainset, testlist, epoch, display_step=10):
+    def test(self, trainset, testlist, epoch):
         self.net.eval()
         x_mat, mask, user_based = trainset.get_mat()
         features = Variable(x_mat.to(device=self.device))
@@ -205,8 +203,8 @@ class OurModel:
         users_true = np.zeros_like(xc)
         users_pred = np.zeros_like(xc)
         rmse = 0.0
-        for (i, j, r) in testlist:
-            rmse += (xc[i][j]-r)*(xc[i][j]-r)
+        for (u, i, r) in testlist:
+            rmse += (xc[u][i]-r)*(xc[u][i]-r)
             users_true[u][i] = r
             users_pred[u][i] = xc[u][i]
         rmse = math.sqrt(rmse / len(testlist))
@@ -222,50 +220,11 @@ class OurModel:
                 zero_cnt += 1
                 continue
 
-            MRR_of_user = MRR_for_user(user_true, user_pred)
-            NDCG_of_user = NDCG_for_user(user_true,user_pred)
+            MRR_of_user = metrics.MRR_for_user(user_true, user_pred)
+            NDCG_of_user = metrics.NDCG_for_user(user_true,user_pred)
             total_MRR += MRR_of_user
             total_nDCG += NDCG_of_user
         total_MRR /= (users_num - zero_cnt)
         total_nDCG /= (users_num - zero_cnt)
 
         return rmse, total_MRR, total_nDCG
-
-
-def MRR_for_user(user_true, user_pred, lower_bound=1, upper_bound=5, top_n=10, threshold=4):
-    # get all itmes that not rated and remove them from prediactions
-    counter = 1
-    user_actual_rating = user_true[user_true.nonzero()]
-    user_pred = user_pred[user_true.nonzero()]
-    amount_to_recommend = min(top_n, len(user_actual_rating))
-    user_pred_sorted_idxs = user_pred.argsort()[::-1][:amount_to_recommend]
-    for idx in user_pred_sorted_idxs:
-        if user_actual_rating[idx] >= threshold:
-            return 1/counter
-        counter += 1
-    return 0
-
-
-
-def NDCG_for_user(user_true,user_pred,lower_bound=1,upper_bound=5,top_n=10):
-    # please use DCG function
-
-    user_actual_rating = user_true[user_true.nonzero()]
-    user_pred = user_pred[user_true.nonzero()]
-    amount_to_recommend = min(top_n,len(user_actual_rating))
-    user_pred_sorted_idxs = user_pred.argsort()[::-1][:amount_to_recommend]
-    rel = []
-    for idx in user_pred_sorted_idxs:
-        rel.append(user_actual_rating[idx])
-    dcg_p = DCG(rel,top_n)
-    rel.sort(reverse = True)
-    Idcg_p = DCG(rel,top_n)
-    return dcg_p/Idcg_p if Idcg_p > 0 else 0
-
-def DCG(rel,n):
-    # please implement the DCG formula
-    total = 0
-    for i in range(1,len(rel)+1):
-        calc = rel[i-1]/np.log2(i+1)
-        total +=calc
-    return total

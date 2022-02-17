@@ -12,6 +12,7 @@ import math
 import wandb
 import numpy as np
 from tqdm import tqdm
+import metrics
 
 class BiasMF(torch.nn.Module):
     def __init__(self, params):
@@ -90,47 +91,11 @@ class BiasMF(torch.nn.Module):
                 zero_cnt += 1
                 continue
 
-            MRR_of_user = MRR_for_user(user_true, user_pred)
-            NDCG_of_user = NDCG_for_user(user_true,user_pred)
+            MRR_of_user = metrics.MRR_for_user(user_true, user_pred)
+            NDCG_of_user = metrics.NDCG_for_user(user_true,user_pred)
             total_MRR += MRR_of_user
             total_nDCG += NDCG_of_user
         total_MRR /= (users_num - zero_cnt)
         total_nDCG /= (users_num - zero_cnt)
 
         return rmse, total_MRR, total_nDCG
-
-def MRR_for_user(user_true, user_pred, top_n=10, threshold=4):
-    # get all itmes that not rated and remove them from prediactions
-    counter = 1
-    user_actual_rating = user_true[user_true.nonzero()]
-    user_pred = user_pred[user_true.nonzero()]
-    amount_to_recommend = min(top_n, len(user_actual_rating))
-    user_pred_sorted_idxs = user_pred.argsort()[::-1][:amount_to_recommend]
-    for idx in user_pred_sorted_idxs:
-        if user_actual_rating[idx] >= threshold:
-            return 1/counter
-        counter += 1
-    return 0
-
-def NDCG_for_user(user_true,user_pred,lower_bound=1,upper_bound=5,top_n=10):
-    # please use DCG function
-
-    user_actual_rating = user_true[user_true.nonzero()]
-    user_pred = user_pred[user_true.nonzero()]
-    amount_to_recommend = min(top_n,len(user_actual_rating))
-    user_pred_sorted_idxs = user_pred.argsort()[::-1][:amount_to_recommend]
-    rel = []
-    for idx in user_pred_sorted_idxs:
-        rel.append(user_actual_rating[idx])
-    dcg_p = DCG(rel,top_n)
-    rel.sort(reverse = True)
-    Idcg_p = DCG(rel,top_n)
-    return dcg_p/Idcg_p if Idcg_p > 0 else 0
-
-def DCG(rel,n):
-    # please implement the DCG formula
-    total = 0
-    for i in range(1,len(rel)+1):
-        calc = rel[i-1]/np.log2(i+1)
-        total +=calc
-    return total

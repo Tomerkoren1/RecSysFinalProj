@@ -1,7 +1,3 @@
-#main.py
-#Modified by ImKe on 2019/9/4.
-#Copyright © 2019 ImKe. All rights reserved.
-
 import numpy as np
 import torch
 from torch.utils import data

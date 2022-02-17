@@ -1,6 +1,3 @@
-#networks.py
-#Modified by ImKe on 2019/9/4.
-#Copyright © 2019 ImKe. All rights reserved.
 
 from collections import OrderedDict
 import torch
@@ -60,23 +57,27 @@ def init_params(layer):
         torch.nn.init.uniform_(layer.bias)
 
 class OurAutoEncoder(nn.Module):
-    def __init__(self, hidden, act_type, dropout=0.1):
+    def __init__(self, hidden, act_type, dropout=0.15):
         super(OurAutoEncoder, self).__init__()
         d1 = OrderedDict()
         for i in range(len(hidden)-1):
             d1['enc_linear' + str(i)] = nn.Linear(hidden[i], hidden[i + 1])#nn.Linear(input,out,bias=True)
             init_params(d1['enc_linear' + str(i)])
-            # d1['enc_bn' + str(i)] = nn.BatchNorm1d(hidden[i + 1])
-            d1['enc_drop' + str(i)] = nn.Dropout(dropout)
+            if(i != len(hidden)-2): # BN only between two FC layers
+                d1['enc_bn' + str(i)] = nn.BatchNorm1d(hidden[i + 1])
             d1['enc_relu'+str(i)] = activation(act_type)
+        d1['enc_drop' + str(i)] = nn.Dropout(dropout)
+            
+            
         self.encoder = nn.Sequential(d1)
         d2 = OrderedDict()
         for i in range(len(hidden) - 1, 0, -1):
             d2['dec_linear' + str(i)] = nn.Linear(hidden[i], hidden[i - 1])
             init_params(d2['dec_linear' + str(i)])
-            # d2['dec_bn' + str(i)] = nn.BatchNorm1d(hidden[i - 1])
-            d2['dec_drop' + str(i)] = nn.Dropout(dropout)
             d2['dec_relu' + str(i)] = activation(act_type)
+            
+            
+            
             
             
         self.decoder = nn.Sequential(d2)

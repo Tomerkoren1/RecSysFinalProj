@@ -1,9 +1,5 @@
-#main.py
-#Modified by ImKe on 2019/9/5.
-#Copyright © 2019 ImKe. All rights reserved.
 
-from re import A
-import setdata as sd
+import datasets as ds
 import model as model
 from datetime import datetime
 from dataloader import load_data
@@ -16,10 +12,8 @@ from torch.utils.data import DataLoader, Dataset
 import json
 
 
-display_step = 10
-plotbool = False
 user_based = False
-use_wandb = True
+use_wandb = False # enable if you want to use wandb package
 
 def cli():
     """ Handle argument parsing
@@ -37,7 +31,7 @@ def cli():
                         help='MF latent dime')
     parser.add_argument('--model_name', default='AutoRec',
                         help='model name')
-    parser.add_argument('--act_type', default='sigmoid',
+    parser.add_argument('--act_type', default='relu',
                         help='activation type')
     parser.add_argument('--dropout', default=0.1,
                         help='dropout value')
@@ -53,7 +47,7 @@ def cli():
     return args
 
 def trainOurAutoRec(args, train_list, val_list, n_user, n_item, user_based, device):
-    trainset = sd.Dataset(train_list, n_user, n_item, user_based)
+    trainset = ds.Dataset(train_list, n_user, n_item, user_based)
     if user_based:
         h = n_item
     else:
@@ -71,10 +65,10 @@ def trainOurAutoRec(args, train_list, val_list, n_user, n_item, user_based, devi
                       device = device,
                       use_wandb = use_wandb)
 
-    RMSE = setmod.run(trainset, val_list, num_epoch = args.epoch_num, plot = plotbool, use_wandb = use_wandb)
+    RMSE = setmod.run(trainset, val_list, num_epoch = args.epoch_num, use_wandb = use_wandb)
 
 def trainAutoRec(args, train_list, val_list, n_user, n_item, user_based, device):
-    trainset = sd.Dataset(train_list, n_user, n_item, user_based)
+    trainset = ds.Dataset(train_list, n_user, n_item, user_based)
     if user_based:
         h = n_item
     else:
@@ -89,7 +83,7 @@ def trainAutoRec(args, train_list, val_list, n_user, n_item, user_based, device)
                       device = device,
                       use_wandb = use_wandb)
 
-    RMSE = setmod.run(trainset, val_list, num_epoch = args.epoch_num, plot = plotbool, use_wandb = use_wandb)
+    RMSE = setmod.run(trainset, val_list, num_epoch = args.epoch_num, use_wandb = use_wandb)
 
 
 def trainBiasMF(args, train_list, val_list, n_user, n_item, device):
@@ -98,14 +92,14 @@ def trainBiasMF(args, train_list, val_list, n_user, n_item, device):
     user_tensor = torch.LongTensor([val[0] for val in train_list]).to(device = device)
     item_tensor = torch.LongTensor([val[1] for val in train_list]).to(device = device)
     rating_tensor = torch.FloatTensor([val[2] for val in train_list]).to(device = device)
-    dataset = sd.RateDataset(user_tensor, item_tensor, rating_tensor)
+    dataset = ds.RateDataset(user_tensor, item_tensor, rating_tensor)
     train_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 
     # Test
     user_tensor = torch.LongTensor([val[0] for val in val_list]).to(device = device)
     item_tensor = torch.LongTensor([val[1] for val in val_list]).to(device = device)
     rating_tensor = torch.FloatTensor([val[2] for val in val_list]).to(device = device)
-    val_dataset = sd.RateDataset(user_tensor, item_tensor, rating_tensor)
+    val_dataset = ds.RateDataset(user_tensor, item_tensor, rating_tensor)
 
     params = {'num_users': n_user, 
             'num_items': n_item,
@@ -128,7 +122,7 @@ if __name__ == '__main__':
     start = datetime.now()
     userArgs = cli()
     if(use_wandb):
-            wandb.init(project="RecFinalProject2", entity="tomerkoren", config=vars(userArgs))
+            wandb.init(project="RecFinalProject", entity="tomerkoren", config=vars(userArgs))
             userArgs = wandb.config
             
     print(vars(userArgs))
