@@ -2,7 +2,7 @@
 
 ### Installation
 
-- Clone this repo:
+- Clone this repo
 - please type the command `pip install -r requirements.txt`
 
 ### Training
