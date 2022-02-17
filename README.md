@@ -25,7 +25,7 @@ We use the wandb sweep feature to run hyper parameters optimization. To reprduce
 - Create an account for wandb and login on your computer. For more details, see https://wandb.ai/site
 - Create a new project
 - Create a new sweep, copy one of our sweep configuration (one per model type) and paste it in your sweep configuration. 
-Our sweep configuration files located at the repository root folder. 
+Our sweep configuration files located at the 'Sweeps' folder. 
 - Open the 'main.py' file and mofify the wand.init entity parameter:
 ```
 wandb.init(project="EnterYourWandbProjectName", entity="EnterYourWandbUserName", config=vars(userArgs))
