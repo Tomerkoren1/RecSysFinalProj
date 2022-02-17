@@ -19,6 +19,7 @@
 9. --dropout - dropout value
 10. --momentum - momentum value
 11. --weight_decay - weight decay value
+12. --use_wandb - use wandb
 
 ### Hyper Parameters
 We use the wandb sweep feature to run hyper parameters optimization. To reprduce our work please do the following:
