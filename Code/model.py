@@ -14,7 +14,7 @@ import metrics
 
 import networks as nets
 
-
+plot = False
 class Model:
     def __init__(self, hidden, learning_rate, batch_size, dropout, device, use_wandb):
         self.batch_size = batch_size
@@ -32,7 +32,7 @@ class Model:
 
         self.feature_size = hidden[0]  # n_user/n_item
 
-    def run(self, trainset, testlist, num_epoch, use_wandb, plot=True):
+    def run(self, trainset, testlist, num_epoch, use_wandb):
         RMSE = []
         pbar = tqdm(range(1, num_epoch + 1))
         for epoch in pbar:
@@ -141,7 +141,7 @@ class OurModel:
 
         self.feature_size = hidden[0]  # n_user/n_item
 
-    def run(self, trainset, testlist, num_epoch, use_wandb, plot=True):
+    def run(self, trainset, testlist, num_epoch, use_wandb):
         RMSE = []
         pbar = tqdm(range(1, num_epoch + 1))
         for epoch in pbar:
