@@ -13,7 +13,6 @@ import json
 
 
 user_based = False
-use_wandb = False # enable if you want to use wandb package
 
 def cli():
     """ Handle argument parsing
@@ -41,6 +40,7 @@ def cli():
                         help='weight decay value')
     parser.add_argument('--dataset', default='ml-1m',
                         help='dataset type')
+    parser.add_argument('--use_wandb', action='store_true', help='use wandb')
 
     args = parser.parse_args()
 
@@ -63,9 +63,9 @@ def trainOurAutoRec(args, train_list, val_list, n_user, n_item, user_based, devi
                       momentum= args.momentum,
                       weight_decay= args.weight_decay,
                       device = device,
-                      use_wandb = use_wandb)
+                      use_wandb = args.use_wandb)
 
-    RMSE = setmod.run(trainset, val_list, num_epoch = args.epoch_num, use_wandb = use_wandb)
+    RMSE = setmod.run(trainset, val_list, num_epoch = args.epoch_num, use_wandb = args.use_wandb)
 
 def trainAutoRec(args, train_list, val_list, n_user, n_item, user_based, device):
     trainset = ds.Dataset(train_list, n_user, n_item, user_based)
@@ -81,9 +81,9 @@ def trainAutoRec(args, train_list, val_list, n_user, n_item, user_based, device)
                       batch_size=args.batch_size,
                       dropout= args.dropout,
                       device = device,
-                      use_wandb = use_wandb)
+                      use_wandb = args.use_wandb)
 
-    RMSE = setmod.run(trainset, val_list, num_epoch = args.epoch_num, use_wandb = use_wandb)
+    RMSE = setmod.run(trainset, val_list, num_epoch = args.epoch_num, use_wandb = args.use_wandb)
 
 
 def trainBiasMF(args, train_list, val_list, n_user, n_item, device):
@@ -112,16 +112,16 @@ def trainBiasMF(args, train_list, val_list, n_user, n_item, device):
     model = BiasMF(params)
     model = model.to(device=device)
 
-    if(use_wandb):
+    if(args.use_wandb):
             wandb.watch(model)
 
-    model.fit(train_loader=train_loader, val_dataset=val_dataset, num_epoch = args.epoch_num, use_wandb = use_wandb)
+    model.fit(train_loader=train_loader, val_dataset=val_dataset, num_epoch = args.epoch_num, use_wandb = args.use_wandb)
 
 
 if __name__ == '__main__':
     start = datetime.now()
     userArgs = cli()
-    if(use_wandb):
+    if(userArgs.use_wandb):
             wandb.init(project="EnterYourWandbProjectName", entity="EnterYourWandbUserName", config=vars(userArgs))
             userArgs = wandb.config
             
