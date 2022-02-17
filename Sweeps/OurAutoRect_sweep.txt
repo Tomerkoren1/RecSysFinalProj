@@ -2,6 +2,7 @@ command:
 - ${env}
 - ./.venv_rec/Scripts/python.exe
 - ${program}
+- --use_wandb
 method: bayes
 metric:
   goal: minimize
